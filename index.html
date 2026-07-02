@@ -971,6 +971,8 @@ const PlayerPanel = React.memo(function PlayerPanel({
   player,
   ui,
   imgs,
+  roster,
+  onSetName,
   onTile,
   onSetUI,
   onUndo,
@@ -1195,14 +1197,32 @@ const PlayerPanel = React.memo(function PlayerPanel({
       borderBottom: "1px solid rgba(255,255,255,0.07)",
       flexShrink: 0
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("select", {
+    value: player.name,
+    onChange: e => onSetName(pi, e.target.value),
+    title: "選手名を選択",
     style: {
       fontSize: 14,
       fontWeight: "bold",
-      color: "rgba(255,255,255,0.75)",
-      letterSpacing: "0.06em"
+      color: "rgba(255,255,255,0.9)",
+      letterSpacing: "0.06em",
+      background: "rgba(255,255,255,0.07)",
+      border: "1px solid #2a2a4a",
+      borderRadius: 4,
+      padding: "2px 4px",
+      maxWidth: 140,
+      minWidth: 0,
+      cursor: "pointer"
     }
-  }, player.name), /*#__PURE__*/React.createElement("input", {
+  }, !roster.includes(player.name) && player.name && /*#__PURE__*/React.createElement("option", {
+    value: player.name
+  }, player.name), roster.length === 0 && /*#__PURE__*/React.createElement("option", {
+    value: "",
+    disabled: true
+  }, "（選手管理タブで登録）"), roster.map((name, idx) => /*#__PURE__*/React.createElement("option", {
+    key: idx,
+    value: name
+  }, name))), /*#__PURE__*/React.createElement("input", {
     type: "text",
     inputMode: "numeric",
     value: scoreStr,
@@ -2030,9 +2050,9 @@ function App() {
     setUi(mkUI());
     setDora([]);
   };
-  const setName = (i, v) => plSet(i, {
+  const setName = React.useCallback((i, v) => plSet(i, {
     name: v
-  });
+  }), [plSet]);
   const regCount = Object.keys(imgs).length;
   const GRID = {
     display: "grid",
@@ -2655,6 +2675,8 @@ function App() {
     player: pl,
     ui: ui[pi],
     imgs: imgs,
+    roster: roster,
+    onSetName: setName,
     onTile: onTile,
     onSetUI: setUiP,
     onUndo: onUndo,
@@ -3036,53 +3058,7 @@ function App() {
       borderTop: "1px solid rgba(255,255,255,0.08)",
       paddingTop: 6
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#4a5a7a",
-      fontWeight: "bold",
-      marginBottom: 4,
-      letterSpacing: "0.08em"
-    }
-  }, "プレイヤー名"), ["東家", "南家", "西家", "北家"].map((label, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 5,
-      marginBottom: 3
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "#4a5a7a",
-      fontWeight: "bold",
-      width: 14,
-      flexShrink: 0
-    }
-  }, label[0]), /*#__PURE__*/React.createElement("select", {
-    value: players[i].name,
-    onChange: e => setName(i, e.target.value),
-    style: {
-      flex: 1,
-      padding: "3px 5px",
-      fontSize: 12,
-      background: "rgba(255,255,255,0.07)",
-      color: "#ccc",
-      border: "1px solid #2a2a4a",
-      borderRadius: 4,
-      minWidth: 0,
-      cursor: "pointer"
-    }
-  }, !roster.includes(players[i].name) && players[i].name && /*#__PURE__*/React.createElement("option", {
-    value: players[i].name
-  }, players[i].name), roster.length === 0 && /*#__PURE__*/React.createElement("option", {
-    value: "",
-    disabled: true
-  }, "（選手管理タブで登録）"), roster.map((name, idx) => /*#__PURE__*/React.createElement("option", {
-    key: idx,
-    value: name
-  }, name))))), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: endMatch,
     className: "btn-press",
     style: {
