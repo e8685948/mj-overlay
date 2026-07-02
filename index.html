@@ -327,6 +327,28 @@ var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
 </script>
+<!-- ══════════ Firebase リアルタイム同期 ══════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  (function () {
+    try {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDJYl_rceIHk7-hUAXe1OcWGv2AjSL6eI0",
+        authDomain: "mahjong-obs.firebaseapp.com",
+        projectId: "mahjong-obs",
+        storageBucket: "mahjong-obs.firebasestorage.app",
+        messagingSenderId: "446681100000",
+        appId: "1:446681100000:web:482bc54785a99aa775ea85"
+      });
+      // シーン共有用ドキュメント（コレクション mjscenes / ドキュメント main）
+      window._mjDoc = firebase.firestore().collection("mjscenes").doc("main");
+    } catch (e) {
+      console.warn("Firebase 初期化に失敗しました（同期は無効）:", e);
+      window._mjDoc = null;
+    }
+  })();
+</script>
 <script>const {
   useState,
   useEffect,
@@ -1559,6 +1581,53 @@ function App() {
       if (s) setRoster(JSON.parse(s));
     } catch (e) {}
   }, []);
+
+  /* ══════════ Firebase リアルタイム同期 ══════════ */
+  const _syncId = useRef(Math.random().toString(36).slice(2) + Date.now().toString(36));
+  const _canWrite = useRef(false);
+  const _lastSceneJson = useRef(null);
+  const _isObsView = useRef(new URLSearchParams(location.search).get("view") === "obs");
+  // 受信：他端末（操作卓）の変更をリアルタイムで画面に反映
+  useEffect(() => {
+    const doc = window._mjDoc;
+    if (!doc) return;
+    const unsub = doc.onSnapshot(snap => {
+      _canWrite.current = true; // 初回スナップショット受信後は送信を許可
+      const d = snap.data();
+      if (!d || !d.scene) return;
+      if (d.senderId === _syncId.current) return; // 自分の書き込みは無視
+      const s = d.scene;
+      // 送信側と同じキー順で保持し、直後の送信エフェクトでのエコー送信を防ぐ
+      _lastSceneJson.current = JSON.stringify({
+        players: s.players, dora: s.dora, showLbl: s.showLbl,
+        scoreStrs: s.scoreStrs, gameRound: s.gameRound,
+        honba: s.honba, kyotaku: s.kyotaku
+      });
+      if (Array.isArray(s.players)) setPlayers(s.players);
+      if (Array.isArray(s.dora)) setDora(s.dora);
+      if (typeof s.showLbl === "boolean") setShowLbl(s.showLbl);
+      if (Array.isArray(s.scoreStrs)) setScoreStrs(s.scoreStrs);
+      if (typeof s.gameRound === "string") setGameRound(s.gameRound);
+      if (typeof s.honba === "number") setHonba(s.honba);
+      if (typeof s.kyotaku === "number") setKyotaku(s.kyotaku);
+    }, err => console.warn("Firebase 同期(受信)エラー:", err));
+    return () => unsub();
+  }, []);
+  // 送信：ローカルの変更をクラウドへ（?view=obs の表示専用モードは送信しない）
+  useEffect(() => {
+    const doc = window._mjDoc;
+    if (!doc || _isObsView.current || !_canWrite.current) return;
+    const scene = { players, dora, showLbl, scoreStrs, gameRound, honba, kyotaku };
+    const json = JSON.stringify(scene);
+    if (json === _lastSceneJson.current) return; // 変化なし or 受信直後のエコー
+    _lastSceneJson.current = json;
+    const t = setTimeout(() => {
+      doc.set({ scene, senderId: _syncId.current, ts: Date.now() })
+        .catch(e => console.warn("Firebase 同期(送信)エラー:", e));
+    }, 200);
+    return () => clearTimeout(t);
+  }, [players, dora, showLbl, scoreStrs, gameRound, honba, kyotaku]);
+
   const saveRoster = list => {
     setRoster(list);
     try {
