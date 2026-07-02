@@ -2368,7 +2368,7 @@ function App() {
     }
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => {
-      if (window.confirm("東1に戻し、全員25000点・副露・リーチ・待ち・ドラを全てリセットします。よろしいですか？")) endMatch();
+      if (window.confirm("半荘を終了しますか？\n東1に戻し、全員25000点・副露・リーチ・待ち・ドラをすべてリセットします。")) endMatch();
     },
     className: "btn-press",
     style: {
@@ -2676,7 +2676,8 @@ function App() {
       gap: 6,
       padding: "7px 10px",
       borderLeft: "1px solid rgba(255,255,255,0.08)",
-      overflow: "hidden"
+      overflowY: "auto",
+      overflowX: "hidden"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
