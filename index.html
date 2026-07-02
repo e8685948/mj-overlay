@@ -2366,7 +2366,24 @@ function App() {
       gap: 10,
       alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      if (window.confirm("東1に戻し、全員25000点・副露・リーチ・待ち・ドラを全てリセットします。よろしいですか？")) endMatch();
+    },
+    className: "btn-press",
+    style: {
+      padding: "5px 14px",
+      borderRadius: 5,
+      border: "1px solid rgba(239,68,68,0.55)",
+      background: "rgba(239,68,68,0.18)",
+      color: "#fca5a5",
+      fontSize: 13,
+      fontWeight: "bold",
+      cursor: "pointer",
+      whiteSpace: "nowrap",
+      flexShrink: 0
+    }
+  }, "🔄 リセット"), /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 14,
       fontWeight: "bold",
