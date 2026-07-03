@@ -966,6 +966,15 @@ const WaitBlock = React.memo(function WaitBlock({
 });
 
 /* ══════════ PlayerPanel ══════════ */
+/* ══════════ リーグ選手名簿（コードに固定＝リセット/再読込でも消えない） ══════════ */
+const LEAGUE_ROSTERS = {
+  "A1": ["あずさ(あ)", "東南(み)", "いまいたくま", "上地健吾", "うすい", "志和友也(大畠)", "渋谷太一(加藤太一)", "蟹池(蟹池さゆみ)", "川島直己", "カワバタ(かわばたゆうや)", "倉岡研一", "Lily(高橋流星)", "廣松翔人", "西尾龍(まつお)", "KAZU", "kazuki", "北川翔太", "千葉楓磨(chiba)"],
+  "A2": ["いわた", "ぐーこう", "こうへー(しもだこうへい)", "さおり", "shota(torii shota)", "白咲翔(島崎畔琉)", "しもっく(Haruki shimojo)", "白藤", "スダ", "たにかわ", "Tomoaki", "ちくわぶ(あらき)", "としちゃん(永田敏洋)", "中里良平", "南潟美緒(みっちゃん)", "にったん", "猫(kikuchi)", "ねむ(おねむ)", "麻衣子", "やまぐちさとる", "山下遼馬", "よしあき", "りこ", "津村悠介", "ちいもも(PLANETT)", "いとう"]
+};
+// 表示名は括弧内の補足を除いた部分（例:「渋谷太一(加藤太一)」→「渋谷太一」）
+const dispName = s => s.replace(/[（(].*$/, "").trim();
+const LEAGUE_DISP_ALL = [...LEAGUE_ROSTERS.A1, ...LEAGUE_ROSTERS.A2].map(dispName);
+
 const PlayerPanel = React.memo(function PlayerPanel({
   pi,
   player,
@@ -1214,15 +1223,21 @@ const PlayerPanel = React.memo(function PlayerPanel({
       minWidth: 0,
       cursor: "pointer"
     }
-  }, !roster.includes(player.name) && player.name && /*#__PURE__*/React.createElement("option", {
+  }, player.name && !LEAGUE_DISP_ALL.includes(player.name) && !roster.includes(player.name) && /*#__PURE__*/React.createElement("option", {
     value: player.name
-  }, player.name), roster.length === 0 && /*#__PURE__*/React.createElement("option", {
-    value: "",
-    disabled: true
-  }, "（選手管理タブで登録）"), roster.map((name, idx) => /*#__PURE__*/React.createElement("option", {
-    key: idx,
-    value: name
-  }, name))), /*#__PURE__*/React.createElement("input", {
+  }, player.name), /*#__PURE__*/React.createElement("optgroup", {
+    label: "A1リーグ", key: "a1"
+  }, LEAGUE_ROSTERS.A1.map((n, i) => /*#__PURE__*/React.createElement("option", {
+    key: i, value: dispName(n)
+  }, n))), /*#__PURE__*/React.createElement("optgroup", {
+    label: "A2リーグ", key: "a2"
+  }, LEAGUE_ROSTERS.A2.map((n, i) => /*#__PURE__*/React.createElement("option", {
+    key: i, value: dispName(n)
+  }, n))), roster.length > 0 && /*#__PURE__*/React.createElement("optgroup", {
+    label: "その他", key: "other"
+  }, roster.map((n, i) => /*#__PURE__*/React.createElement("option", {
+    key: i, value: n
+  }, n)))), /*#__PURE__*/React.createElement("input", {
     type: "text",
     inputMode: "numeric",
     value: scoreStr,
