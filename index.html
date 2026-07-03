@@ -815,7 +815,7 @@ const MeldBlock = React.memo(function MeldBlock({
     }
   }, (dispScore * 100).toLocaleString("en-US"))), /*#__PURE__*/React.createElement("div", {
     style: {
-      width: MG_W,
+      width: COL_W,
       height: MG_H,
       background: "#000000",
       border: "1px solid rgba(180,180,180,0.5)",
@@ -2084,17 +2084,10 @@ function App() {
     multi5: false,
     deadWaits: []
   } : pl)), []);
-  // 半荘終了：点数250リセット＋副露・待ち・状態クリア（名前は維持）
+  // 半荘終了：点数25000リセット＋副露・待ち・状態クリア＋選手名も初期化（東家/南家/西家/北家）
   const endMatch = () => {
-    setPlayers(p => p.map(pl => ({
-      ...pl,
-      score: 250,
-      melds: [],
-      waits: [],
-      deadWaits: [],
-      status: null,
-      multi5: false
-    })));
+    // 選手名も含めて初期化（東家/南家/西家/北家に戻す）
+    setPlayers(mkPlayers());
     setScoreStrs(["250", "250", "250", "250"]);
     setUi(mkUI());
     setGameRound("東1");
@@ -2450,24 +2443,7 @@ function App() {
       gap: 10,
       alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      if (window.confirm("半荘を終了しますか？\n東1に戻し、全員25000点・副露・リーチ・待ち・ドラをすべてリセットします。")) endMatch();
-    },
-    className: "btn-press",
-    style: {
-      padding: "5px 14px",
-      borderRadius: 5,
-      border: "1px solid rgba(239,68,68,0.55)",
-      background: "rgba(239,68,68,0.18)",
-      color: "#fca5a5",
-      fontSize: 13,
-      fontWeight: "bold",
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      flexShrink: 0
-    }
-  }, "🔄 半荘終了"), /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 14,
       fontWeight: "bold",
