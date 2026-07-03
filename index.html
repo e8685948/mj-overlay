@@ -981,6 +981,7 @@ const PlayerPanel = React.memo(function PlayerPanel({
   ui,
   imgs,
   roster,
+  leagues,
   onSetName,
   onTile,
   onSetUI,
@@ -996,6 +997,9 @@ const PlayerPanel = React.memo(function PlayerPanel({
   onScoreStrChange,
   onRiichi
 }) {
+  const leagueA1 = (leagues && leagues.A1 || []).filter(n => n && n.trim());
+  const leagueA2 = (leagues && leagues.A2 || []).filter(n => n && n.trim());
+  const leagueDispAll = [...leagueA1, ...leagueA2].map(dispName);
   const {
     sec,
     mt,
@@ -1223,15 +1227,15 @@ const PlayerPanel = React.memo(function PlayerPanel({
       minWidth: 0,
       cursor: "pointer"
     }
-  }, player.name && !LEAGUE_DISP_ALL.includes(player.name) && !roster.includes(player.name) && /*#__PURE__*/React.createElement("option", {
+  }, player.name && !leagueDispAll.includes(player.name) && !roster.includes(player.name) && /*#__PURE__*/React.createElement("option", {
     value: player.name
   }, player.name), /*#__PURE__*/React.createElement("optgroup", {
     label: "A1リーグ", key: "a1"
-  }, LEAGUE_ROSTERS.A1.map((n, i) => /*#__PURE__*/React.createElement("option", {
+  }, leagueA1.map((n, i) => /*#__PURE__*/React.createElement("option", {
     key: i, value: dispName(n)
   }, n))), /*#__PURE__*/React.createElement("optgroup", {
     label: "A2リーグ", key: "a2"
-  }, LEAGUE_ROSTERS.A2.map((n, i) => /*#__PURE__*/React.createElement("option", {
+  }, leagueA2.map((n, i) => /*#__PURE__*/React.createElement("option", {
     key: i, value: dispName(n)
   }, n))), roster.length > 0 && /*#__PURE__*/React.createElement("optgroup", {
     label: "その他", key: "other"
@@ -1676,6 +1680,51 @@ function App() {
     setRosterInput("");
   };
   const removeFromRoster = name => saveRoster(roster.filter(n => n !== name));
+
+  /* ── リーグ選手名簿（保存・編集可能。初期値は LEAGUE_ROSTERS、リセットでは消えない） ── */
+  const [leagues, setLeagues] = useState(() => {
+    try {
+      const s = localStorage.getItem("mjleagues");
+      if (s) {
+        const o = JSON.parse(s);
+        if (o && Array.isArray(o.A1) && Array.isArray(o.A2)) return o;
+      }
+    } catch (e) {}
+    return { A1: [...LEAGUE_ROSTERS.A1], A2: [...LEAGUE_ROSTERS.A2] };
+  });
+  const saveLeagues = next => {
+    setLeagues(next);
+    try { localStorage.setItem("mjleagues", JSON.stringify(next)); } catch (e) {}
+  };
+  const editLeaguePlayer = (lg, idx, val) => saveLeagues({ ...leagues, [lg]: leagues[lg].map((n, i) => i === idx ? val : n) });
+  const removeLeaguePlayer = (lg, idx) => saveLeagues({ ...leagues, [lg]: leagues[lg].filter((_, i) => i !== idx) });
+  const addLeaguePlayer = lg => saveLeagues({ ...leagues, [lg]: [...leagues[lg], "新しい選手"] });
+  const renderLeague = (title, lg) => /*#__PURE__*/React.createElement("div", {
+    key: lg,
+    style: { flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 13, fontWeight: "bold", color: "#8ab4f8", letterSpacing: "0.08em" }
+  }, title), /*#__PURE__*/React.createElement("span", {
+    style: { fontSize: 11, color: "#3a3a5a" }
+  }, leagues[lg].length, "名"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => addLeaguePlayer(lg),
+    style: { marginLeft: "auto", padding: "4px 12px", borderRadius: 5, border: "none", cursor: "pointer", fontSize: 12, fontWeight: "bold", background: "#2563eb", color: "#fff" }
+  }, "＋追加")), /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", flexWrap: "wrap", gap: 6 }
+  }, leagues[lg].map((name, idx) => /*#__PURE__*/React.createElement("div", {
+    key: idx,
+    style: { display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", padding: "3px 4px 3px 6px" }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: name,
+    onChange: e => editLeaguePlayer(lg, idx, e.target.value),
+    style: { width: 130, padding: "3px 5px", fontSize: 13, background: "transparent", color: "#ddd", border: "1px solid #2a2a4a", borderRadius: 4 }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeLeaguePlayer(lg, idx),
+    title: "削除",
+    style: { width: 18, height: 18, borderRadius: "50%", border: "none", background: "rgba(239,68,68,0.5)", color: "#fff", fontSize: 11, cursor: "pointer", flexShrink: 0 }
+  }, "×")))));
 
   /* ── 牌登録 ── */
   const openPick = key => {
@@ -2691,6 +2740,7 @@ function App() {
     ui: ui[pi],
     imgs: imgs,
     roster: roster,
+    leagues: leagues,
     onSetName: setName,
     onTile: onTile,
     onSetUI: setUiP,
@@ -3096,7 +3146,7 @@ function App() {
       flexDirection: "column",
       gap: 12,
       padding: "8px 4px",
-      overflow: "hidden"
+      overflowY: "auto"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3139,8 +3189,7 @@ function App() {
     }
   }, roster.length, "名登録済み")), /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
-      overflowY: "auto",
+      flexShrink: 0,
       display: "flex",
       flexWrap: "wrap",
       gap: 8,
@@ -3184,7 +3233,7 @@ function App() {
       justifyContent: "center",
       flexShrink: 0
     }
-  }, "×"))))))));
+  }, "×")))), renderLeague("A1リーグ", "A1"), renderLeague("A2リーグ", "A2")))));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));</script>
 </body>
